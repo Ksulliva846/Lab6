@@ -1,0 +1,159 @@
+dds<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="description" content="Canvas Flowmap Layer with LeafletJS." />
+
+  <title>MyFlowMap</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6/dist/leaflet.css" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: 0;
+    }
+    .title {
+              padding: 6px 8px;
+              font-family: 'Acme';font-size: 22px;
+              background: white;
+              background: rgba(255,255,255,0.8);
+              box-shadow: 0 0 15px rgba(0,0,0,0.2);
+              border-radius: 5px;
+          }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="map"></div>
+  <div id="CanvasFlowMap"></div>
+
+  <!-- first load LeafletJS -->
+  <script src="https://unpkg.com/leaflet@1.6/dist/leaflet.js"></script>
+
+  <!-- load Esri Leaflet because we want to use an Esri basemap -->
+  <script src="https://unpkg.com/esri-leaflet@2.3/dist/esri-leaflet.js"></script>
+
+  <!-- load animation tweening lib requirement for CanvasFlowMapLayer -->
+  <script src="https://unpkg.com/@tweenjs/tween.js@18.5/dist/tween.umd.js"></script>
+
+  <!-- then load CanvasFlowMapLayer -->
+  <script src="CanvasFlowmapLayer.js"></script>
+  <script type="text/javascript" src="mymapdata.js"></script>
+
+  <!-- also load 3rd-party CSV parsing libary just for this demo  -->
+  <script src="https://unpkg.com/papaparse@5.1/papaparse.min.js"></script>
+
+  <script>
+    var map = L.map('map');
+
+    if (L.Browser.mobile) {
+      map.setView([15, -21.95], 2);
+    } else {
+      map.setView([38.16, -96.96], 4);
+    }
+
+    L.esri.basemapLayer('DarkGray').addTo(map);
+    L.esri.basemapLayer('DarkGrayLabels').addTo(map);
+    var CanvasFlowMap = L.canvasFlowmapLayer(mydata, {
+        originAndDestinationFieldIds: {
+            originUniqueIdField: 'GEOID_B',  //origin ID, use GEOID_B if you want to reverse the flow
+              originGeometry: { //origin coordinates
+                x: 'B_lon',
+                y: 'B_lat'
+              },
+              destinationUniqueIdField: 'GEOID_A', //destination ID
+              destinationGeometry: { //destination coordinates
+                x: 'centroids_wgs84_lon',
+                y: 'centroids_wgs84_lat'
+              }
+            },
+          canvasBezierStyle: {
+            type: 'classBreaks',
+            field: 'Net_B2A',
+            classBreakInfos: [{
+              classMinValue: -500,
+              classMaxValue: 0,
+              symbol: {
+                strokeStyle: '#dd1c77',
+                lineWidth: 0.5,
+                lineCap: 'round',
+                shadowColor: '#e7e1ef',
+                shadowBlur: 1.5
+              }
+            }, {
+              classMinValue: -1000,
+              classMaxValue: -501,
+              symbol: {
+                strokeStyle: '#dd1c77',
+                lineWidth: 1.5,
+                lineCap: 'round',
+                shadowColor: '#c994c7',
+                shadowBlur: 1.5
+              }
+            }, {
+              classMinValue: -1500,
+              classMaxValue: -1001,
+              symbol: {
+                strokeStyle: '#dd1c77',
+                lineWidth: 3,
+                lineCap: 'round',
+                shadowColor: '#dd1c77',
+                shadowBlur: 1.5
+              }
+            }, {
+              classMinValue: -5500,
+               classMaxValue: -1500,
+               symbol: {
+                 strokeStyle: '#dd1c77',
+                 lineWidth: 4,
+                 lineCap: 'round',
+                 shadowColor: '#c994c7',
+                 shadowBlur: 1.5
+               }
+            }],
+            // the layer will use the defaultSymbol if a data value doesn't fit
+            // in any of the defined classBreaks
+            defaultSymbol: {
+              strokeStyle: '#c994c7f',
+              lineWidth: 3,
+              lineCap: 'round',
+              shadowColor: '#e7e1ef',
+              shadowBlur: 1.5
+            },
+          },
+          pathDisplayMode: 'all',
+          animationStarted: true,
+          animationEasingFamily: 'Cubic',
+          animationEasingType: 'In',
+          animationDuration: 1000
+        }).addTo(map);
+        map.addLayer(CanvasFlowMap);
+        var title = L.control({position: 'topright'}); // position of the title
+
+                    title.onAdd = function (map) {
+                        this._div = L.DomUtil.create('div', 'title'); // create a div with a class "title"
+                        this._div.innerHTML = "<h3>TOP 10 Inflows to Cook County</h3>";  // Title text, may use html to customize
+                        return this._div;
+                    };
+
+                    title.addTo(map);
+
+  </script>
+
+</body>
+
+</html>
